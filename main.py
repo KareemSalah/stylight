@@ -1,4 +1,5 @@
 import os
+import sys
 from book_processor import BookAnalyzer
 from word_analyzer import WordAnalyzer
 
@@ -18,6 +19,8 @@ def main():
 
     book_analyzer.run()
     word_analyzer.persist_results()
+
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
