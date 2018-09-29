@@ -52,7 +52,7 @@ class WordAnalyzer:
         word = word.strip(self.chars_stripping)
 
         # Returning a list because in future, a word might needs to be splitted into other words
-        return [word]
+        return word.split('--')
 
 
     def insert_word(self, word):
