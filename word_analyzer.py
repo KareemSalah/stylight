@@ -1,9 +1,12 @@
 import json
+import pprint
+
 
 class WordAnalyzer:
 
     def __init__(self):
         self.word_counter = {}
+        self.sorted_word_counter = []
         self.chars_stripping = '.,_;:!?\'"*-'
 
 
@@ -76,5 +79,15 @@ class WordAnalyzer:
         Filename is output.json
         """
 
+        self.sorted_word_counter = list(reversed(sorted(self.word_counter.items(), key=lambda kv: kv[1])))
+
         with open('output.json', 'w') as output_file:
             output_file.writelines(json.dumps(self.word_counter, indent=2))
+
+        with open('output_sorted.json', 'w') as output_file:
+            output_file.writelines(json.dumps(self.sorted_word_counter, indent=2))
+
+        pp = pprint.PrettyPrinter(indent=4)
+
+        print('\n\nDescending word counts:\n')
+        pp.pprint(self.sorted_word_counter)
