@@ -6,6 +6,7 @@ class WordAnalyzer:
         self.word_counter = {}
         self.chars_stripping = '.,_;:!?\'"*-'
 
+
     def process_word(self, word):
         """Processes a word by stripping special characters
         From begining and end of string only
