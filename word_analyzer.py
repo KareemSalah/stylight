@@ -37,14 +37,10 @@ class WordAnalyzer:
         word = str.lower(word)
 
         if squar_bracket_left + squar_bracket_right == 1:
-            print('YES[]' + word)
             word = word.strip('][')
-            print(word)
 
         if parenthesis_left + parenthesis_right == 1:
-            print('YES()' + word)
             word = word.strip(')(')
-            print(word)
 
         if double_quotes:
             word = word.replace('"', '')
@@ -52,7 +48,9 @@ class WordAnalyzer:
         word = word.strip(self.chars_stripping)
 
         # Returning a list because in future, a word might needs to be splitted into other words
-        return word.split('--')
+        if '--' in word:
+            return word.split('--')
+        return [word]
 
 
     def insert_word(self, word):
