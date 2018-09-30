@@ -877,9 +877,6 @@
 
 
   <script>
-    /**
-      Function declarations at the beginning
-    */
     var tableDomElements = [];
     var tableValues = [];
     var comparisonTypes = [];
@@ -895,6 +892,14 @@
       }
 
       return res;
+    }
+
+    const updateDom = function () {
+      for (var i = 1; i < tableValues.length; ++i) {
+        for (var j = 0; j < tableValues[i].length - 1; ++j) { // -1 to skip the original index cell
+          tableDomElements[i][j].innerText = tableValues[i][j];
+        }
+      }
     }
 
     const extractRowValues = function (rowIndex) {
@@ -956,7 +961,7 @@
       return compareResult;
     }
 
-    const mergeHalves = function (firstLeft, firstRight, secondLeft, secondRight, columnIndex) {
+    const mergeHalvesInPlace = function (firstLeft, firstRight, secondLeft, secondRight, columnIndex) {
       let i = firstLeft;
       let j = secondLeft;
 
@@ -974,6 +979,42 @@
       }
     }
 
+    const mergeHalves = function (firstLeft, firstRight, secondLeft, secondRight, columnIndex) {
+      let i = firstLeft;
+      let j = secondLeft;
+      let scratchArray = [];
+
+      while (i <= firstRight && j <= secondRight) {
+        if (tableCompare(i, j, columnIndex) <= 0) {
+          scratchArray.push(simpleArrayClone(tableValues[i]));
+          ++i;
+        } else {
+          scratchArray.push(simpleArrayClone(tableValues[j]));
+          ++j;
+        }
+      }
+
+      while (i <= firstRight) {
+        scratchArray.push(simpleArrayClone(tableValues[i]));
+        ++i;
+      }
+
+      while (j <= secondRight) {
+        scratchArray.push(simpleArrayClone(tableValues[j]));
+        ++j;
+      }
+
+      // Updating tableValues to continue other merges
+      for (i = firstLeft; i <= secondRight; ++i) {
+        tableValues[i] = scratchArray[i - firstLeft];
+      }
+
+      // If this is the last merge, update the dom
+      if (firstLeft === 1 && secondRight === tableValues.length - 1) {
+        updateDom();
+      }
+    }
+
     const mergeSortTable = function (leftIndex, rightIndex, columnIndex) {
       if (leftIndex >= rightIndex) {
         // Stopping condition, a 1 item array is already sorted
@@ -983,6 +1024,7 @@
       let middleIndex = parseInt(leftIndex + (rightIndex - leftIndex) / 2);
       mergeSortTable(leftIndex, middleIndex, columnIndex);
       mergeSortTable(middleIndex + 1, rightIndex, columnIndex);
+      // mergeHalvesInPlace(leftIndex, middleIndex, middleIndex + 1, rightIndex, columnIndex);
       mergeHalves(leftIndex, middleIndex, middleIndex + 1, rightIndex, columnIndex);
     }
 
