@@ -882,6 +882,9 @@
     */
     var tableDomElements = [];
     var tableValues = [];
+    var comparisonTypes = [];
+    var currentSortColumnIndex = -1;
+    var sortDirection = 1; // 1 For ascending and -1 for Descending
 
     const simpleArrayClone = function (arr) {
       // Assuming that arr contains only primitive types
@@ -923,13 +926,10 @@
       }
     }
 
-    const valueCompare = function (valA, valB) {
-      var parsedA = parseInt(valA);
-      var parsedB = parseInt(valB);
-
-      if (!isNaN(parsedA) && !isNaN(parsedB)) {
-        valA = parsedA;
-        valB = parsedB;
+    const valueCompare = function (valA, valB, columnIndex) {
+      if (comparisonTypes[columnIndex] === 'number') {
+        valA = parseInt(valA);
+        valB = parseInt(valB);
       }
 
       if (valA < valB) {
@@ -945,12 +945,12 @@
       var valA = tableValues[rowIndexA][columnIndex];
       var valB = tableValues[rowIndexB][columnIndex];
 
-      compareResult = valueCompare(valA, valB);
+      compareResult = valueCompare(valA, valB, columnIndex) * sortDirection;
 
       if (compareResult === 0) {
         let lastCellIdxA = tableValues[rowIndexA].length - 1;
         let lastCellIdxB = tableValues[rowIndexB].length - 1;
-        return tableValues[rowIndexA][lastCellIdxA] < tableValues[rowIndexB][lastCellIdxB] ? -1 : 1;
+        return sortDirection * (tableValues[rowIndexA][lastCellIdxA] < tableValues[rowIndexB][lastCellIdxB] ? -1 : 1);
       }
 
       return compareResult;
@@ -998,6 +998,14 @@
         }
       }
 
+      if (columnIndex === currentSortColumnIndex) {
+        sortDirection *= -1;
+      } else {
+        sortDirection = 1;
+      }
+
+      currentSortColumnIndex = columnIndex;
+
       const tableSize = tableDomElements.length;
       mergeSortTable(1, tableSize - 1, columnIndex); // Ignoring header row
     }
@@ -1014,9 +1022,21 @@
           tableRows[i].children[j].classList.add('clm-' + j); // Used clm instead of col to avoid interference with bootstrap col class (if used)
           tableDomElements[i].push(tableRows[i].children[j]);
           tableValues[i].push(tableDomElements[i][j].innerText);
+
+          if (i > 0 && isNaN(tableValues[i][j])) {
+            comparisonTypes[j] = 'string';
+          } else if (i == 0) {
+            comparisonTypes.push('number');
+          }
         }
 
         tableValues[i].push(i);
+      }
+    }
+
+    const addClickEventListeners = function() {
+      for (var i = 0; i < tableDomElements[0].length; ++i) {
+        tableDomElements[0][i].addEventListener('click', sortTable);
       }
     }
 
@@ -1033,12 +1053,6 @@
         }
       }
       console.log('Found all keys');
-    }
-
-    const addClickEventListeners = function() {
-      for (var i = 0; i < tableDomElements[0].length; ++i) {
-        tableDomElements[0][i].addEventListener('click', sortTable);
-      }
     }
 
     addClassesToTable();
