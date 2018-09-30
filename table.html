@@ -880,8 +880,22 @@
     /**
       Function declarations at the beginning
     */
+    var tableDomElements = [];
+    var tableValues = [];
+
+    const simpleArrayClone = function (arr) {
+      // Assuming that arr contains only primitive types
+      var res = [];
+
+      for (var i = 0; i < arr.length; ++i) {
+        res.push(arr[i]);
+      }
+
+      return res;
+    }
+
     const extractRowValues = function (rowIndex) {
-      var row = document.querySelector('.row-' + rowIndex).children;
+      var row = tableDomElements[rowIndex];
       var values = [];
 
       for (var i = 0; i < row.length; ++i) {
@@ -892,17 +906,20 @@
     }
 
     const updateRowWithValues = function (rowIndex, values) {
-      var row = document.querySelector('.row-' + rowIndex).children;
+      var rowDom = tableDomElements[rowIndex];
+      var rowMemory = tableValues[rowIndex];
 
-      for (var i = 0; i < values.length; ++i) {
-        row[i].innerText = values[i];
+      for (var i = 0; i < values.length - 1; ++i) { // Loop until -1 because last element is just the original index
+        rowDom[i].innerText = values[i];
+        rowMemory[i] = values[i];
       }
+
+      rowMemory[rowMemory.length - 1] = values[values.length - 1];
     }
 
     const tableShift = function (startIndex, shiftPlaces) {
       for (var i = startIndex + shiftPlaces; i > startIndex; --i) {
-        let values = extractRowValues(i - 1);
-        updateRowWithValues(i, values);
+        updateRowWithValues(i, tableValues[i - 1]);
       }
     }
 
@@ -925,10 +942,18 @@
     }
 
     const tableCompare = function (rowIndexA, rowIndexB, columnIndex) {
-      var rowA = document.querySelector('.row-' + rowIndexA).children;
-      var rowB = document.querySelector('.row-' + rowIndexB).children;
+      var valA = tableValues[rowIndexA][columnIndex];
+      var valB = tableValues[rowIndexB][columnIndex];
 
-      return valueCompare(rowA[columnIndex].innerText, rowB[columnIndex].innerText);
+      compareResult = valueCompare(valA, valB);
+
+      if (compareResult === 0) {
+        let lastCellIdxA = tableValues[rowIndexA].length - 1;
+        let lastCellIdxB = tableValues[rowIndexB].length - 1;
+        return tableValues[rowIndexA][lastCellIdxA] < tableValues[rowIndexB][lastCellIdxB] ? -1 : 1;
+      }
+
+      return compareResult;
     }
 
     const mergeHalves = function (firstLeft, firstRight, secondLeft, secondRight, columnIndex) {
@@ -939,7 +964,7 @@
         if (tableCompare(i, j, columnIndex) <= 0) {
           ++i;
         } else {
-          const temp = extractRowValues(j);
+          const temp = simpleArrayClone(tableValues[j]);
           tableShift(i, j - i);
           updateRowWithValues(i, temp);
           ++i;
@@ -973,7 +998,7 @@
         }
       }
 
-      const tableSize = document.querySelector('tbody').children.length
+      const tableSize = tableDomElements.length;
       mergeSortTable(1, tableSize - 1, columnIndex); // Ignoring header row
     }
 
@@ -982,18 +1007,37 @@
 
       for (var i = 0; i < tableRows.length; ++i) {
         tableRows[i].classList.add('row-' + i);
+        tableDomElements.push([]);
+        tableValues.push([]);
 
         for (var j = 0; j < tableRows[i].children.length; ++j) {
           tableRows[i].children[j].classList.add('clm-' + j); // Used clm instead of col to avoid interference with bootstrap col class (if used)
+          tableDomElements[i].push(tableRows[i].children[j]);
+          tableValues[i].push(tableDomElements[i][j].innerText);
         }
+
+        tableValues[i].push(i);
       }
     }
 
-    const addClickEventListeners = function() {
-      var headerColumns = document.querySelector('.row-0');
+    const displayNumbers = function () {
+      var check = {};
+      for (var i = 0; i < tableValues.length; ++i) {
+        check[tableValues[i][tableValues[i].length - 1]] = 1;
+      }
+      for (var i = 0; i < tableValues.length; ++i) {
+        if (!check.hasOwnProperty(i)) {
+          console.log('Missing key');
+          console.log(i);
+          return;
+        }
+      }
+      console.log('Found all keys');
+    }
 
-      for (var i = 0; i < headerColumns.children.length; ++i) {
-        headerColumns.children[i].addEventListener('click', sortTable);
+    const addClickEventListeners = function() {
+      for (var i = 0; i < tableDomElements[0].length; ++i) {
+        tableDomElements[0][i].addEventListener('click', sortTable);
       }
     }
 
