@@ -880,6 +880,103 @@
     /**
       Function declarations at the beginning
     */
+    const extractRowValues = function (rowIndex) {
+      var row = document.querySelector('.row-' + rowIndex).children;
+      var values = [];
+
+      for (var i = 0; i < row.length; ++i) {
+        values.push(row[i].innerText) // Is innerText sanitized ?
+      }
+
+      return values;
+    }
+
+    const updateRowWithValues = function (rowIndex, values) {
+      var row = document.querySelector('.row-' + rowIndex).children;
+
+      for (var i = 0; i < values.length; ++i) {
+        row[i].innerText = values[i];
+      }
+    }
+
+    const tableShift = function (startIndex, shiftPlaces) {
+      for (var i = startIndex + shiftPlaces; i > startIndex; --i) {
+        let values = extractRowValues(i - 1);
+        updateRowWithValues(i, values);
+      }
+    }
+
+    const valueCompare = function (valA, valB) {
+      var parsedA = parseInt(valA);
+      var parsedB = parseInt(valB);
+
+      if (!isNaN(parsedA) && !isNaN(parsedB)) {
+        valA = parsedA;
+        valB = parsedB;
+      }
+
+      if (valA < valB) {
+        return -1;
+      }
+      if (valA > valB) {
+        return 1;
+      }
+      return 0;
+    }
+
+    const tableCompare = function (rowIndexA, rowIndexB, columnIndex) {
+      var rowA = document.querySelector('.row-' + rowIndexA).children;
+      var rowB = document.querySelector('.row-' + rowIndexB).children;
+
+      return valueCompare(rowA[columnIndex].innerText, rowB[columnIndex].innerText);
+    }
+
+    const mergeHalves = function (firstLeft, firstRight, secondLeft, secondRight, columnIndex) {
+      let i = firstLeft;
+      let j = secondLeft;
+
+      while (i <= firstRight && j <= secondRight) {
+        if (tableCompare(i, j, columnIndex) <= 0) {
+          ++i;
+        } else {
+          const temp = extractRowValues(j);
+          tableShift(i, j - i);
+          updateRowWithValues(i, temp);
+          ++i;
+          ++firstRight;
+          ++j;
+        }
+      }
+    }
+
+    const mergeSortTable = function (leftIndex, rightIndex, columnIndex) {
+      if (leftIndex >= rightIndex) {
+        // Stopping condition, a 1 item array is already sorted
+        return ;
+      }
+
+      let middleIndex = parseInt(leftIndex + (rightIndex - leftIndex) / 2);
+      mergeSortTable(leftIndex, middleIndex, columnIndex);
+      mergeSortTable(middleIndex + 1, rightIndex, columnIndex);
+      mergeHalves(leftIndex, middleIndex, middleIndex + 1, rightIndex, columnIndex);
+    }
+
+    const sortTable = function (e) {
+      var columnIndex = e.target.classList;
+
+      for (var i = 0; i < columnIndex.length; ++i) {
+        if (/clm-/.test(columnIndex[i])) {
+
+          // Get the first group, which corresponds to column index
+          columnIndex = parseInt(/clm-(\d+)/.exec(columnIndex[i])[1])
+          break;
+        }
+      }
+
+      const tableSize = document.querySelector('tbody').children.length
+      mergeSortTable(1, tableSize - 1, columnIndex); // Ignoring header row
+    }
+
     const addClassesToTable = function () {
       var tableRows = document.querySelector('tbody').children;
 
@@ -890,21 +987,6 @@
           tableRows[i].children[j].classList.add('clm-' + j); // Used clm instead of col to avoid interference with bootstrap col class (if used)
         }
       }
-    }
-
-    const sortTable = function (e) {
-      var columnIndex = e.target.classList;
-
-      for (var i = 0; i < columnIndex.length; ++i) {
-        if (/clm-/.test(columnIndex[i])) {
-
-          // Get the first group, which corresponds to column index
-          columnIndex = /clm-(\d+)/.exec(columnIndex[i])[1]
-          break;
-        }
-      }
-
-      // sortOnColumn(columnIndex)
     }
 
     const addClickEventListeners = function() {
